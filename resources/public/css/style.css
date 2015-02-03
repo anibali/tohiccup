@@ -2,3 +2,8 @@ body {
   padding-top: 20px;
   padding-bottom: 20px;
 }
+
+textarea.form-control {
+  resize: none;
+  height: 300px;
+}
