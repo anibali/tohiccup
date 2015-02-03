@@ -5,29 +5,49 @@
             [om-tools.core :refer-macros [defcomponentk]]
             [om-tools.dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
+            [hickory.core :as hickory]
             [sablono.core :as html :refer-macros [html]]))
 
-(defonce app-state (atom {}))
+(defonce app-state (atom
+                    {:html-text ""
+                     :hiccup-text ""}))
 
-(defn process-action [_])
+(defn process-action [[action-name action-data]]
+  (case action-name
+    :update-hiccup
+    (let [html-text action-data
+          dom-node (hickory/parse html-text)
+          new-hiccup-text (hickory/as-hiccup dom-node)]
+      (swap! app-state assoc :hiccup-text new-hiccup-text))))
 
 (defcomponentk html-input-view
   "HTML text input view"
-  [data owner]
+  [state owner]
   (display-name [this] "HtmlArea")
-  (render-state [this {:keys [action-chan new-item-title]}]
+  (render-state [this {:keys [action-chan]}]
     (html [:div
            [:h2 "<html>"]
-           [:textarea {:class "form-control"}]])))
+           [:textarea
+            {:class "form-control"
+             :value (@app-state :html-text)
+             :onChange (fn [e]
+                         (let [new-value (.. e -target -value)]
+                           (put! action-chan [:update-hiccup new-value])
+                           (swap! app-state assoc :html-text new-value)))}]])))
 
 (defcomponentk hiccup-input-view
   "Hiccup text input view"
-  [data owner]
+  [state owner]
   (display-name [this] "HiccupArea")
-  (render-state [this {:keys [action-chan new-item-title]}]
+  (render-state [this {:keys [action-chan]}]
     (html [:div
            [:h2 "[:hiccup]"]
-           [:textarea {:class "form-control"}]])))
+           [:textarea
+            {:class "form-control"
+             :value (@app-state :hiccup-text)
+             :onChange (fn [e]
+                         (let [new-value (.. e -target -value)]
+                           (swap! app-state assoc :hiccup-text new-value)))}]])))
 
 (defcomponentk converter-view
   "Top-level HTML <-> Hiccup converter component"
@@ -40,7 +60,7 @@
       (go-loop []
                (process-action (<! action-chan))
                (recur))))
-  (render-state [this {:keys [action-chan new-item-title]}]
+  (render-state [this {:keys [action-chan html-text]}]
     (html [:div {:class "row"}
            [:div {:class "col-sm-6"}
             (om/build html-input-view data

@@ -19,6 +19,7 @@
                  [environ "1.0.0"]
                  [com.cemerick/piggieback "0.1.3"]
                  [sablono "0.2.22"]
+                 [hickory "0.5.4"]
                  [leiningen "2.5.0"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
