@@ -16,8 +16,8 @@
   (case action-name
     :update-hiccup
     (let [html-text action-data
-          dom-node (hickory/parse html-text)
-          new-hiccup-text (hickory/as-hiccup dom-node)]
+          nodes (hickory/parse-fragment html-text)
+          new-hiccup-text (map hickory/as-hiccup nodes)]
       (swap! app-state assoc :hiccup-text new-hiccup-text))))
 
 (defcomponentk html-input-view
