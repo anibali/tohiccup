@@ -4,6 +4,7 @@
             [om.dom :as dom :include-macros true]
             [om-tools.core :refer-macros [defcomponentk]]
             [om-tools.dom :include-macros true]
+            [clojure.string :refer [join trim blank?]]
             [cljs.core.async :refer [put! chan <!]]
             [hickory.core :as hickory]
             [sablono.core :as html :refer-macros [html]]))
@@ -12,12 +13,28 @@
                     {:html-text ""
                      :hiccup-text ""}))
 
+(declare beautify-hiccup)
+
+(defn beautify-hiccup-coll [hiccup-expression indent]
+  (join (str "\n" indent)
+        (filter #(not= % "")
+                (map #(beautify-hiccup % (str " " indent))
+                     hiccup-expression))))
+
+(defn beautify-hiccup [hiccup-expression indent]
+  (cond
+   (seq? hiccup-expression) (beautify-hiccup-coll hiccup-expression indent)
+   (vector? hiccup-expression) (str "[" (beautify-hiccup-coll hiccup-expression indent) "]")
+   (map? hiccup-expression) ""
+   (blank? hiccup-expression) ""
+   :else (pr-str hiccup-expression)))
+
 (defn process-action [[action-name action-data]]
   (case action-name
     :update-hiccup
     (let [html-text action-data
           nodes (hickory/parse-fragment html-text)
-          new-hiccup-text (map hickory/as-hiccup nodes)]
+          new-hiccup-text (beautify-hiccup (map hickory/as-hiccup nodes) "")]
       (swap! app-state assoc :hiccup-text new-hiccup-text))))
 
 (defcomponentk html-input-view
