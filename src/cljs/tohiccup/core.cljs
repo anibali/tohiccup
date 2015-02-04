@@ -12,8 +12,8 @@
 (defonce app-state (atom
                     {:html-text ""
                      :hiccup-text ""}))
-
 (defonce hiccup-ace-editor (atom nil))
+(defonce html-ace-editor (atom nil))
 
 (declare beautify-hiccup)
 
@@ -43,22 +43,29 @@
 
 (defn set-ace-editor-value [ace-editor value]
   (let [cursor (.getCursorPositionScreen ace-editor)]
-    (.setValue ace-editor (@app-state :hiccup-text) cursor)))
+    (.. ace-editor getSession (setValue (@app-state :hiccup-text) cursor))))
 
 (defcomponentk html-input-view
   "HTML text input view"
   [state owner]
   (display-name [this] "HtmlArea")
-  (render-state [this {:keys [action-chan]}]
-    (html [:div
-           [:h2 "<html>"]
-           [:textarea
-            {:class "form-control"
-             :value (@app-state :html-text)
-             :onChange (fn [e]
-                         (let [new-value (.. e -target -value)]
-                           (put! action-chan [:update-hiccup new-value])
-                           (swap! app-state assoc :html-text new-value)))}]])))
+  (render [this] (html [:div
+                        [:h2 "<html>"]
+                        [:div {:ref "html-ace-editor"}]]))
+  (did-mount [this]
+    (let [action-chan (@state :action-chan)
+          ace-editor (.edit js/ace (om/get-node owner "html-ace-editor"))
+          ace-session (.getSession ace-editor)]
+      (.setOptions ace-editor (js-obj "minLines" 25 "maxLines" 25))
+      (.setTheme ace-editor "ace/theme/github")
+      (.setMode ace-session "ace/mode/html")
+      (reset! html-ace-editor ace-editor)
+      (.on ace-session "change"
+           #(put! action-chan [:update-hiccup
+                               (.getValue @html-ace-editor)])))))
+      ;(set-ace-editor-value ace-editor (@app-state :html-text))
+  ;(will-update [this _ {:keys [action-chan]}]
+  ;  (set-ace-editor-value @html-ace-editor (@app-state :html-text))))
 
 (defcomponentk hiccup-input-view
   "Hiccup text input view"
@@ -66,18 +73,20 @@
   (display-name [this] "HiccupArea")
   (render [this] (html [:div
                         [:h2 "[:hiccup]"]
-                        [:div#hiccup-ace-editor]]))
+                        [:div {:ref "hiccup-ace-editor"}]]))
   (did-mount [this]
-    (let [ace-editor (.edit js/ace "hiccup-ace-editor")]
+    (let [action-chan (@state :action-chan)
+          ace-editor (.edit js/ace (om/get-node owner "hiccup-ace-editor"))
+          ace-session (.getSession ace-editor)]
       (.setOptions ace-editor (js-obj "minLines" 25 "maxLines" 25))
       (.setTheme ace-editor "ace/theme/github")
-      (.setMode (.getSession ace-editor) "ace/mode/clojure")
+      (.setMode ace-session "ace/mode/clojure")
       (.setReadOnly ace-editor true) ; Read-only for now
-      (.. ace-editor
-          getSession
-          (on "change" #(put! (@state :action-chan) [:update-html (.getValue @hiccup-ace-editor)])))
-      (set-ace-editor-value ace-editor (@app-state :hiccup-text))
-      (reset! hiccup-ace-editor ace-editor)))
+      (reset! hiccup-ace-editor ace-editor)
+      (.on ace-session "change"
+           #(put! action-chan [:update-html
+                               (.getValue @hiccup-ace-editor)]))
+      (set-ace-editor-value ace-editor (@app-state :hiccup-text))))
   (will-update [this _ {:keys [action-chan]}]
     (set-ace-editor-value @hiccup-ace-editor (@app-state :hiccup-text))))
 
