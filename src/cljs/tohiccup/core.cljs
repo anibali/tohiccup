@@ -13,6 +13,8 @@
                     {:html-text ""
                      :hiccup-text ""}))
 
+(defonce hiccup-ace-editor (atom nil))
+
 (declare beautify-hiccup)
 
 (defn beautify-hiccup-coll [hiccup-expression indent]
@@ -25,7 +27,7 @@
   (cond
    (seq? hiccup-expression) (beautify-hiccup-coll hiccup-expression indent)
    (vector? hiccup-expression) (str "[" (beautify-hiccup-coll hiccup-expression indent) "]")
-   (map? hiccup-expression) ""
+   (= hiccup-expression {}) ""
    (blank? hiccup-expression) ""
    :else (pr-str hiccup-expression)))
 
@@ -35,7 +37,13 @@
     (let [html-text action-data
           nodes (hickory/parse-fragment html-text)
           new-hiccup-text (beautify-hiccup (map hickory/as-hiccup nodes) "")]
-      (swap! app-state assoc :hiccup-text new-hiccup-text))))
+      (swap! app-state assoc :hiccup-text new-hiccup-text))
+    :update-html
+    "TODO"))
+
+(defn set-ace-editor-value [ace-editor value]
+  (let [cursor (.getCursorPositionScreen ace-editor)]
+    (.setValue ace-editor (@app-state :hiccup-text) cursor)))
 
 (defcomponentk html-input-view
   "HTML text input view"
@@ -56,15 +64,22 @@
   "Hiccup text input view"
   [state owner]
   (display-name [this] "HiccupArea")
-  (render-state [this {:keys [action-chan]}]
-    (html [:div
-           [:h2 "[:hiccup]"]
-           [:textarea
-            {:class "form-control"
-             :value (@app-state :hiccup-text)
-             :onChange (fn [e]
-                         (let [new-value (.. e -target -value)]
-                           (swap! app-state assoc :hiccup-text new-value)))}]])))
+  (render [this] (html [:div
+                        [:h2 "[:hiccup]"]
+                        [:div#hiccup-ace-editor]]))
+  (did-mount [this]
+    (let [ace-editor (.edit js/ace "hiccup-ace-editor")]
+      (.setOptions ace-editor (js-obj "minLines" 25 "maxLines" 25))
+      (.setTheme ace-editor "ace/theme/github")
+      (.setMode (.getSession ace-editor) "ace/mode/clojure")
+      (.setReadOnly ace-editor true) ; Read-only for now
+      (.. ace-editor
+          getSession
+          (on "change" #(put! (@state :action-chan) [:update-html (.getValue @hiccup-ace-editor)])))
+      (set-ace-editor-value ace-editor (@app-state :hiccup-text))
+      (reset! hiccup-ace-editor ace-editor)))
+  (will-update [this _ {:keys [action-chan]}]
+    (set-ace-editor-value @hiccup-ace-editor (@app-state :hiccup-text))))
 
 (defcomponentk converter-view
   "Top-level HTML <-> Hiccup converter component"
