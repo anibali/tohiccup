@@ -27,7 +27,7 @@
 
 (defn set-ace-editor-value [ace-editor value]
   (let [cursor (.getCursorPositionScreen ace-editor)]
-    (.. ace-editor getSession (setValue (@app-state :hiccup-text) cursor))))
+    (.setValue ace-editor (@app-state :hiccup-text) cursor)))
 
 (defcomponentk html-input-view
   "HTML text input view"
