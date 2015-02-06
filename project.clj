@@ -5,7 +5,7 @@
   :source-paths ["src/clj" "src/cljs"]
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2505" :scope "provided"]
+                 [org.clojure/clojurescript "0.0-2740" :scope "provided"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [ring/ring-devel "1.3.2"]
                  [javax.servlet/servlet-api "2.5"]
@@ -17,7 +17,7 @@
                  [potemkin "0.3.4"]
                  [figwheel "0.1.4-SNAPSHOT"]
                  [environ "1.0.0"]
-                 [com.cemerick/piggieback "0.1.3"]
+                 [com.cemerick/piggieback "0.1.5"]
                  [sablono "0.2.22"]
                  [hickory "0.5.4"]
                  [leiningen "2.5.0"]]
