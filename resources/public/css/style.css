@@ -5,5 +5,8 @@ body {
 
 textarea.form-control {
   resize: none;
-  height: 300px;
+}
+
+#footer {
+  margin-top: 24px;
 }

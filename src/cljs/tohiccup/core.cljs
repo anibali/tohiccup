@@ -23,7 +23,7 @@
           new-hiccup-text (beautify-hiccup (map hickory/as-hiccup nodes) "")]
       (swap! app-state assoc :hiccup-text new-hiccup-text))
     :update-html
-    "TODO"))
+    "TODO: Update HTML from Hiccup input"))
 
 (defn set-ace-editor-value [ace-editor value]
   (let [cursor (.getCursorPositionScreen ace-editor)]
@@ -40,7 +40,7 @@
     (let [action-chan (@state :action-chan)
           ace-editor (.edit js/ace (om/get-node owner "html-ace-editor"))
           ace-session (.getSession ace-editor)]
-      (.setOptions ace-editor (js-obj "minLines" 25 "maxLines" 25))
+      (.setOptions ace-editor (js-obj "minLines" 30 "maxLines" 30))
       (.setTheme ace-editor "ace/theme/github")
       (.setMode ace-session "ace/mode/html")
       (reset! html-ace-editor ace-editor)
@@ -62,7 +62,7 @@
     (let [action-chan (@state :action-chan)
           ace-editor (.edit js/ace (om/get-node owner "hiccup-ace-editor"))
           ace-session (.getSession ace-editor)]
-      (.setOptions ace-editor (js-obj "minLines" 25 "maxLines" 25))
+      (.setOptions ace-editor (js-obj "minLines" 30 "maxLines" 30))
       (.setTheme ace-editor "ace/theme/github")
       (.setMode ace-session "ace/mode/clojure")
       (.setReadOnly ace-editor true) ; Read-only for now
